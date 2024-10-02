@@ -9,4 +9,4 @@ DerivedData/
 .netrc
 
 # the output file
-/pbcopy-chromium
+/pbcopy-chromium.gz

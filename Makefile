@@ -1,4 +1,4 @@
-default: build sign
+default: build sign compress
 
 build:
 	swift build --configuration release --arch arm64 --arch x86_64
@@ -6,3 +6,6 @@ build:
 
 sign:
 	codesign --sign "${CODESIGN_IDENTITY}" --options runtime  --timestamp pbcopy-chromium
+
+compress:
+	gzip -f pbcopy-chromium

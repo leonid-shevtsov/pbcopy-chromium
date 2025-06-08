@@ -52,7 +52,7 @@ You can also use this functionality in your own Swift projects by adding the `Ch
 ```swift
 // In your Package.swift
 dependencies: [
-    .package(url: "https://github.com/leonid-shevtsov/pbcopy-chromium.git", from: "2.0.0")
+    .package(url: "https://github.com/leonid-shevtsov/pbcopy-chromium.git", from: "2.1.0")
 ]
 ```
 

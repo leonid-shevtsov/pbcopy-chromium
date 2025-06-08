@@ -30,7 +30,7 @@ struct PbcopyChromium: ParsableCommand {
         ChromiumPasteboard.write(contents, type: type)
     }
 
-    func getContents() -> String? {
+    func getContents() -> Data? {
         var input: FileHandle
 
         if let inputFile {
@@ -48,7 +48,7 @@ struct PbcopyChromium: ParsableCommand {
                 fputs("No input\n", stderr)
                 return nil
             }
-            return String(decoding: contentsData, as: UTF8.self)
+            return contentsData
         } catch {
             fputs("failed to read input: \(error)\n", stderr)
             return nil
@@ -58,7 +58,7 @@ struct PbcopyChromium: ParsableCommand {
     func runPaste() throws {
         do {
             let contents = try ChromiumPasteboard.read(type: type)
-            print(contents)
+            FileHandle.standardOutput.write(contents)
         } catch PasteboardError.noData {
             fputs("no data in clipboard, copy something from Chromium first\n", stderr)
         } catch let PasteboardError.wrongType(expected, got) {

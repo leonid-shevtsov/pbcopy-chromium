@@ -8,16 +8,16 @@ public enum ChromiumPasteboard {
 
     /// Write content to the Chromium pasteboard
     /// - Parameters:
-    ///   - content: The string content to write
+    ///   - content: The data content to write
     ///   - type: The MIME type of the content
-    public static func write(_ content: String, type: String) {
+    public static func write(_ content: Data, type: String) {
         var buffer = ByteBuffer()
 
         // Entry count
         writeInt32(&buffer, 1)
         // The only entry
         writeString(&buffer, type)
-        writeString(&buffer, content)
+        writeData(&buffer, content)
 
         var bufferWithLength = ByteBuffer()
 
@@ -36,7 +36,7 @@ public enum ChromiumPasteboard {
     /// - Parameter type: The expected MIME type of the content
     /// - Returns: The read content if available and of the correct type
     /// - Throws: An error if the content is not available or of the wrong type
-    public static func read(type: String) throws -> String {
+    public static func read(type: String) throws -> Data {
         let pasteboard = NSPasteboard.general
         guard let data = pasteboard.data(forType: Self.pasteboardType) else {
             throw PasteboardError.noData
@@ -64,7 +64,7 @@ public enum ChromiumPasteboard {
             throw PasteboardError.wrongType(expected: type, got: entryType)
         }
 
-        guard let contents = readString(&buffer) else {
+        guard let contents = readData(&buffer) else {
             throw PasteboardError.invalidData
         }
 
@@ -86,6 +86,10 @@ private func writeInt32(_ buffer: inout ByteBuffer, _ value: UInt32) {
 
 private func writeString(_ buffer: inout ByteBuffer, _ string: String) {
     let data = string.data(using: .utf8)!
+    writeData(&buffer, data)
+}
+
+private func writeData(_ buffer: inout ByteBuffer, _ data: Data) {
     buffer.writeInteger(UInt32(data.count), endianness: .little)
     buffer.writeBytes(data)
 }
@@ -95,10 +99,17 @@ private func readInt32(_ buffer: inout ByteBuffer) -> UInt32? {
 }
 
 private func readString(_ buffer: inout ByteBuffer) -> String? {
+    guard let data = readData(&buffer) else {
+        return nil
+    }
+    return String(data: data, encoding: .utf8)
+}
+
+private func readData(_ buffer: inout ByteBuffer) -> Data? {
     guard let length = buffer.readInteger(endianness: .little, as: UInt32.self),
           let data = buffer.readBytes(length: Int(length))
     else {
         return nil
     }
-    return String(data: Data(data), encoding: .utf8)
+    return Data(data)
 }

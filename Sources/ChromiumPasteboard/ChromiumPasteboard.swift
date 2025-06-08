@@ -6,18 +6,18 @@ import NIOFoundationCompat
 public enum ChromiumPasteboard {
     public static let pasteboardType = NSPasteboard.PasteboardType("org.chromium.web-custom-data")
 
-    /// Write content to the Chromium pasteboard
+    /// Write a string to the Chromium pasteboard
     /// - Parameters:
-    ///   - content: The data content to write
+    ///   - content: The string content to write
     ///   - type: The MIME type of the content
-    public static func write(_ content: Data, type: String) {
+    public static func write(_ content: String, type: String) {
         var buffer = ByteBuffer()
 
         // Entry count
         writeInt32(&buffer, 1)
         // The only entry
         writeString(&buffer, type)
-        writeData(&buffer, content)
+        writeString(&buffer, content)
 
         var bufferWithLength = ByteBuffer()
 
@@ -32,11 +32,11 @@ public enum ChromiumPasteboard {
         pasteboard.setData(data, forType: Self.pasteboardType)
     }
 
-    /// Read content from the Chromium pasteboard
+    /// Read a string from the Chromium pasteboard
     /// - Parameter type: The expected MIME type of the content
-    /// - Returns: The read content if available and of the correct type
+    /// - Returns: The read string if available and of the correct type
     /// - Throws: An error if the content is not available or of the wrong type
-    public static func read(type: String) throws -> Data {
+    public static func read(type: String) throws -> String {
         let pasteboard = NSPasteboard.general
         guard let data = pasteboard.data(forType: Self.pasteboardType) else {
             throw PasteboardError.noData
@@ -64,7 +64,7 @@ public enum ChromiumPasteboard {
             throw PasteboardError.wrongType(expected: type, got: entryType)
         }
 
-        guard let contents = readData(&buffer) else {
+        guard let contents = readString(&buffer) else {
             throw PasteboardError.invalidData
         }
 
@@ -77,39 +77,4 @@ public enum PasteboardError: Error {
     case invalidData
     case invalidEntryCount(Int)
     case wrongType(expected: String, got: String)
-}
-
-// Helper functions
-private func writeInt32(_ buffer: inout ByteBuffer, _ value: UInt32) {
-    buffer.writeInteger(value, endianness: .little)
-}
-
-private func writeString(_ buffer: inout ByteBuffer, _ string: String) {
-    let data = string.data(using: .utf8)!
-    writeData(&buffer, data)
-}
-
-private func writeData(_ buffer: inout ByteBuffer, _ data: Data) {
-    buffer.writeInteger(UInt32(data.count), endianness: .little)
-    buffer.writeBytes(data)
-}
-
-private func readInt32(_ buffer: inout ByteBuffer) -> UInt32? {
-    return buffer.readInteger(endianness: .little, as: UInt32.self)
-}
-
-private func readString(_ buffer: inout ByteBuffer) -> String? {
-    guard let data = readData(&buffer) else {
-        return nil
-    }
-    return String(data: data, encoding: .utf8)
-}
-
-private func readData(_ buffer: inout ByteBuffer) -> Data? {
-    guard let length = buffer.readInteger(endianness: .little, as: UInt32.self),
-          let data = buffer.readBytes(length: Int(length))
-    else {
-        return nil
-    }
-    return Data(data)
 }

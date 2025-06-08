@@ -1,3 +1,4 @@
+import Foundation
 import NIO
 
 func writeInt32(_ buffer: inout ByteBuffer, _ int: UInt32) {
@@ -9,13 +10,10 @@ func writeInt16(_ buffer: inout ByteBuffer, _ int: UInt16) {
 }
 
 func writeString(_ buffer: inout ByteBuffer, _ string: String) {
-    let utf16String = string.utf16
-    // length
-    writeInt32(&buffer, UInt32(utf16String.count))
-    // chars
-    utf16String.forEach { char in writeInt16(&buffer, char) }
-    // zero char
-    writeInt16(&buffer, 0)
+    let data = string.data(using: .utf16LittleEndian)!
+    writeInt32(&buffer, UInt32(data.count / 2)) // divide by 2 because UTF-16 uses 2 bytes per character
+    buffer.writeBytes(data)
+    writeInt16(&buffer, 0) // write zero char at end
 }
 
 func readInt32(_ buffer: inout ByteBuffer) -> UInt32? {
@@ -31,17 +29,14 @@ func readString(_ buffer: inout ByteBuffer) -> String? {
         return nil
     }
 
-    var chars: [UTF16.CodeUnit] = []
-
-    for _ in 0 ..< length {
-        guard let char = readInt16(&buffer) else {
-            return nil
-        }
-        chars.append(char)
+    guard let bytes = buffer.readBytes(length: Int(length * 2)) else {
+        return nil
     }
+
+    let data = Data(bytes)
 
     // advance over zero char
     _ = readInt16(&buffer)
 
-    return String(decoding: chars, as: UTF16.self)
+    return String(data: data, encoding: .utf16LittleEndian)
 }

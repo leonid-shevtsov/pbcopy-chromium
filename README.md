@@ -29,7 +29,7 @@ Please let me know / open a PR if you find more!
 
 Currently, only works with macOS, although possibly can be ported to other operating systems.
 
-Download the latest release from the “Releases” page and place into a directory on your `$PATH`.
+Download the latest release from the "Releases" page and place into a directory on your `$PATH`.
 
 ## Usage
 
@@ -45,6 +45,34 @@ OPTIONS:
   -h, --help              Show help information.
 ```
 
+## Using as a Package
+
+You can also use this functionality in your own Swift projects by adding the `ChromiumPasteboard` package as a dependency:
+
+```swift
+// In your Package.swift
+dependencies: [
+    .package(url: "https://github.com/leonid-shevtsov/pbcopy-chromium.git", from: "1.0.0")
+]
+```
+
+Then in your code:
+
+```swift
+import ChromiumPasteboard
+
+// Write to pasteboard
+ChromiumPasteboard.write("Hello, World!", type: "obsidian/canvas")
+
+// Read from pasteboard
+do {
+    let content = try ChromiumPasteboard.read(type: "obsidian/canvas")
+    print(content)
+} catch {
+    print("Error: \(error)")
+}
+```
+
 ---
 
-&copy; 2024 [Leonid Shevtsov](https://leonid.shevtsov.me), released under the MIT license
+&copy; 2024-2025 [Leonid Shevtsov](https://leonid.shevtsov.me), released under the MIT license
